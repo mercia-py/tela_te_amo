@@ -1,113 +1,153 @@
+'Projeto aba de cadastro de transporte, site em html da Mercia lima
+
+Crie em formato de formulario e abre por fora da tela um formulario com as informações dos dados abaixo  para Cadastrar,visualizar  e baixar em pdf.
+
+
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Transporte</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <title>Cadastro de Roteirização</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            background-color: #f4f4f4;
         }
-        form {
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
+        .form-container {
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        label, select, input {
-            margin-bottom: 10px;
+        .form-container input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        #cadastroInfo {
-            display: none;
-            border: 1px solid #000;
-            padding: 15px;
-            margin-top: 20px;
-            max-width: 500px;
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <h2>Cadastro de Transporte</h2>
-    <form id="cadastroForm"></form>
-    <div id="cadastroInfo">
-        <h3>Informações Cadastradas</h3>
-        <p id="info"></p>
-        <button onclick="editarCadastro()">Editar</button>
-        <button onclick="gerarPDF()">Gerar PDF</button>
+
+    <h1>Cadastro de Roteirização</h1>
+
+    <div class="form-container">
+        <label for="transportadora-origem">Transportadora Origem:</label>
+        <input type="text" id="transportadora-origem" required>
+        <label for="destinatario">Destinatário:</label>
+        <input type="text" id="destinatario" required>
+        <label for="placa-carreta">Placa Carreta:</label>
+        <input type="text" id="placa-carreta" required>
+        <label for="remetente-uf">Remetente UF:</label>
+        <input type="text" id="remetente-uf" required>
+        <label for="destino-uf">Destino UF:</label>
+        <input type="text" id="destino-uf" required>
+        <label for="nome-motorista">Nome Motorista:</label>
+        <input type="text" id="nome-motorista" required>
+        <button class="btn" onclick="cadastrar()">Cadastrar</button>
     </div>
-    
+
+    <div id="gerar-pdf-container" style="display:none;">
+        <button class="btn" onclick="gerarPDF()">Gerar PDF</button>
+    </div>
+
+    <div id="gerar-novo-cadastro-container" style="display:none;">
+        <p>Gerar Novo Cadastro?</p>
+        <button class="btn" onclick="novoCadastro('sim')">Sim</button>
+        <button class="btn" onclick="novoCadastro('nao')">Não</button>
+    </div>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.getElementById("cadastroForm");
-            const campos = [
-                { label: "Nome Da Transportadora", id: "transportadora", type: "select", options: ["OURO NEGRO LTDA", "MARKET CARGO LTDA", "GITER", "SOLUÇÃO", "MODULAR"] },
-                { label: "Digite o Novo Cadastro de transportadora", id: "novaTransportadora", type: "text" },
-                { label: "Nome Do Motorista", id: "motorista", type: "text" },
-                { label: "Número Da Placa Cavalo", id: "placaCavalo", type: "text" },
-                { label: "Número Da Placa Carreta", id: "placaCarreta", type: "text" },
-                { label: "Remetente Origem", id: "remetente", type: "text" },
-                { label: "Destino Origem", id: "destino", type: "text" },
-                { label: "Qtd Nota Fiscal", id: "qtdNota", type: "number" },
-                { label: "Qtd Geral de Peso", id: "peso", type: "number" },
-                { label: "Unidade de Peso", id: "unidadePeso", type: "select", options: ["KG", "TONS", "G"] },
-                { label: "Qtd Valor Total Nfes", id: "valorNfe", type: "number" },
-                { label: "Número Lacre", id: "lacre", type: "text" },
-                { label: "Data Emissão", id: "dataEmissao", type: "date" },
-                { label: "Data Previsão Entrega", id: "dataEntrega", type: "date" },
-                { label: "Data Chegada Destino Origem", id: "dataChegada", type: "date" },
-                { label: "Status", id: "status", type: "select", options: ["ENTREGA FINALIZADA", "ENTREGA PENDENTE", "ENTREGA EM ATRASO", "ENTREGA ATRASADA", "ENTREGA CANCELADA"] },
-                { label: "Observação", id: "observacao", type: "text" }
-            ];
-
-            campos.forEach(campo => {
-                let label = document.createElement("label");
-                label.textContent = campo.label;
-                form.appendChild(label);
-                
-                let input;
-                if (campo.type === "select") {
-                    input = document.createElement("select");
-                    campo.options.forEach(option => {
-                        let opt = document.createElement("option");
-                        opt.textContent = option;
-                        input.appendChild(opt);
-                    });
-                } else {
-                    input = document.createElement("input");
-                    input.type = campo.type;
-                }
-                input.id = campo.id;
-                form.appendChild(input);
-            });
-            
-            let botao = document.createElement("button");
-            botao.type = "button";
-            botao.textContent = "Cadastrar";
-            botao.onclick = cadastrar;
-            form.appendChild(botao);
-        });
-
         function cadastrar() {
-            let info = "";
-            document.querySelectorAll("#cadastroForm input, #cadastroForm select").forEach(input => {
-                info += `<strong>${input.previousSibling.textContent}:</strong> ${input.value}<br>`;
-            });
-            document.getElementById("info").innerHTML = info;
-            document.getElementById("cadastroInfo").style.display = "block";
-        }
+            const transportadoraOrigem = document.getElementById('transportadora-origem').value;
+            const destinatario = document.getElementById('destinatario').value;
+            const placaCarreta = document.getElementById('placa-carreta').value;
+            const remetenteUf = document.getElementById('remetente-uf').value;
+            const destinoUf = document.getElementById('destino-uf').value;
+            const nomeMotorista = document.getElementById('nome-motorista').value;
 
-        function editarCadastro() {
-            document.getElementById("cadastroInfo").style.display = "none";
+            if (!transportadoraOrigem || !destinatario || !placaCarreta || !remetenteUf || !destinoUf || !nomeMotorista) {
+                alert('Por favor, preencha todos os campos!');
+                return;
+            }
+
+            document.getElementById('gerar-pdf-container').style.display = 'block';
+            document.getElementById('gerar-novo-cadastro-container').style.display = 'block';
+
+            window.dadosCadastro = {
+                transportadoraOrigem,
+                destinatario,
+                placaCarreta,
+                remetenteUf,
+                destinoUf,
+                nomeMotorista
+            };
         }
 
         function gerarPDF() {
+            const { transportadoraOrigem, destinatario, placaCarreta, remetenteUf, destinoUf, nomeMotorista } = window.dadosCadastro;
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            let conteudo = document.getElementById("info").innerHTML.replace(/<br>/g, "
-");
-            doc.text(conteudo, 10, 10);
-            doc.save("Cadastro_Transporte.pdf");
+
+            const pageWidth = doc.internal.pageSize.width;
+            const borderX = 20;
+            const borderY = 20;
+            const borderWidth = pageWidth - 40;
+            const borderHeight = 150;
+
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(2);
+            doc.rect(borderX, borderY, borderWidth, borderHeight);
+
+            doc.setFontSize(26);
+            doc.setTextColor(0, 0, 255);
+            const title = 'ROTEIRIZAÇÃO';
+            const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+            const titleX = (pageWidth - titleWidth) / 2;
+            doc.text(title, titleX, 40);
+
+            doc.setFontSize(18);
+            doc.setTextColor(255, 165, 0);
+            const subtitle = transportadoraOrigem.toUpperCase();
+            const subtitleWidth = doc.getStringUnitWidth(subtitle) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+            const subtitleX = (pageWidth - subtitleWidth) / 2;
+            doc.text(subtitle, subtitleX, 55);
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            const textY = 75;
+
+            doc.text(`Transportadora Origem: ${transportadoraOrigem}`, borderX + 10, textY);
+            doc.text(`Destinatário: ${destinatario}`, borderX + 10, textY + 10);
+            doc.text(`Placa Carreta: ${placaCarreta}`, borderX + 10, textY + 20);
+            doc.text(`Remetente UF: ${remetenteUf}`, borderX + 10, textY + 30);
+            doc.text(`Destino UF: ${destinoUf}`, borderX + 10, textY + 40);
+            doc.text(`Nome Motorista: ${nomeMotorista}`, borderX + 10, textY + 50);
+
+            doc.save('roteirizacao.pdf');
         }
     </script>
 </body>
